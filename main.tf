@@ -16,7 +16,7 @@ provider "aws" {
 resource "aws_s3_bucket" "mon_bucket_terraform" {
   # /!\ Le nom doit être unique au MONDE. 
   # Ajoute ton nom ou des chiffres pour éviter les erreurs.
-  bucket = "mon-projet-devops-2026-votre-nom" 
+  bucket = "mon-projet-devops-2026-votre-nom"
 
   tags = {
     Name        = "Terraform State Storage"
