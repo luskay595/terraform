@@ -39,4 +39,4 @@ jobs:
       # On n'applique QUE sur la branche main (après le merge)
       - name: Terraform Apply
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-        run: terraform apply -auto-approve
+        run: terraform destroy -auto-approve
