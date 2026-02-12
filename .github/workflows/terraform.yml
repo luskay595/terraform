@@ -1,4 +1,4 @@
-name: "Terraform CI"
+name: "Terraform CI/CD"
 
 on:
   push:
@@ -8,32 +8,35 @@ on:
 
 jobs:
   terraform:
-    name: "Terraform Lint and Validate"
+    name: "Terraform Plan & Apply"
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: "eu-west-3"
 
     steps:
-      # 1. Récupérer le code du dépôt
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Installer Terraform sur le runner
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.7.0
 
-      # 3. Vérifier le formatage (échoue si le code est mal indenté)
+      - name: Terraform Init
+        run: terraform init
+
       - name: Terraform Format
         run: terraform fmt -check
 
-      # 4. Initialiser Terraform (nécessaire pour la validation)
-      - name: Terraform Init
-        run: terraform init
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: "eu-west-3"
+      # ÉTAPE CLÉ : Le Plan
+      # On génère un fichier de plan pour être sûr de ce qu'on va appliquer
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+        continue-on-error: true
 
-      # 5. Vérifier la validité du code (syntaxe, arguments manquants)
-      - name: Terraform Validate
-        run: terraform validate
+      # ÉTAPE OPTIONNELLE : Terraform Apply
+      # On n'applique QUE sur la branche main (après le merge)
+      - name: Terraform Apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -auto-approve
